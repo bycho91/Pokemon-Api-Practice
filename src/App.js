@@ -1,39 +1,55 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Link, Switch } from "react-router-dom";
 import About from "./About";
-import Home from "./Home";
+import List from "./List";
+import { BrowserRouter as Router, Switch, Link, Route } from "react-router-dom";
+import SearchIcon from "@material-ui/icons/Search";
 import axios from "axios";
 
 const App = () => {
-  const [pokemonList, setPokemonList] = useState([]);
-  const [currentUrl, setCurrentUrl] = useState(
-    "https://pokeapi.co/api/v2/pokemon"
-  );
+  const [pokemons, setPokemons] = useState();
+  const [text, setText] = useState("");
 
   useEffect(() => {
-    axios.get(currentUrl).then((res) => {
-      const results = res.data.results.map((p, i) => {
-        return { ...p, id: i + 1 };
+    axios.get("https://pokeapi.co/api/v2/pokemon?limit=1500").then((res) => {
+      const results = res.data.results.map((pokemon, i) => {
+        return { name: pokemon.name, url: pokemon.url, idx: i + 1 };
       });
 
-      setPokemonList(results);
-    }, []);
-  });
+      const filteredResults = results.filter((result) =>
+        result.name.includes(text)
+      );
+
+      setPokemons(filteredResults);
+    });
+  }, [text]);
 
   return (
     <Router>
-      <div className="w-full flex flex-col items-center">
-        <Link to="/">
-          <h1 className="text-blue-400 text-4xl p-12">Pokemon Database</h1>
+      <header className="w-full bg-yellow-400 h-32 flex items-center justify-between px-10">
+        <Link to="/" onClick={() => setText("")}>
+          <h1 className="text-blue-700 text-4xl font-bold">
+            Pokemon <span className="text-red-700">API</span> Finder
+          </h1>
         </Link>
-      </div>
+        <div className="search-bar">
+          <SearchIcon className="mr-1 cursor-pointer" />
+          <input
+            type="text"
+            placeholder="Search Pokemon"
+            className="p-3 rounded-xl outline-none"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+        </div>
+      </header>
 
       <Switch>
         <Route path="/about/:slug">
           <About />
         </Route>
+
         <Route path="/">
-          <Home pokemonList={pokemonList} />
+          <List pokemons={pokemons} />
         </Route>
       </Switch>
     </Router>
